@@ -15,6 +15,22 @@ The setup consists of the following components:
 - Docker
 - Docker Compose
 
+## Minimum System Requirements
+
+To run this Docker Compose setup, your system should meet the following minimum specifications:
+
+- **CPU**: 4 cores (minimum)
+- **Memory**: 6 GB RAM (minimum)
+- **Storage**: 10 GB free disk space (for Docker images and data volumes)
+- **Operating System**: Linux, macOS, or Windows with Docker Desktop installed
+
+These requirements are based on the resource limits configured for each service:
+- PgCat: 0.5 CPU core, 256MB memory
+- Citus Coordinator: 1.0 CPU core, 1GB memory
+- Citus Workers (3): 1.0 CPU core each, 1GB memory each
+
+For production workloads or larger datasets, higher specifications are recommended.
+
 ## Quick Start
 
 1. Clone this repository:
