@@ -19,7 +19,7 @@ The setup consists of the following components:
 
 1. Clone this repository:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/cloudsbird/citus-docker-compose
    cd citus-docker-compose
    ```
 
