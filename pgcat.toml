@@ -1,0 +1,17 @@
+# pgcat.toml
+
+[pgcat]
+listen_addr = "0.0.0.0"
+listen_port = 5432
+verbose = true
+log_level = "info"
+log_format = "json"
+
+[database.citus]
+pool_size = 100
+pool_mode = "transaction"
+host = "citus_coordinator"
+port = 5432
+user = "postgres"
+password = "secret"
+database = "citus"

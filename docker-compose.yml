@@ -1,0 +1,160 @@
+services:
+  pgcat:
+    image: ghcr.io/postgresml/pgcat:latest
+    restart: unless-stopped
+    container_name: pgcat
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./pgcat.toml:/etc/pgcat/pgcat.toml
+    depends_on:
+      citus-coordinator:
+        condition: service_healthy
+    networks:
+      - citus-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+  citus-coordinator:
+    image: citusdata/citus:13.0.3-alpine
+    restart: unless-stopped
+    container_name: citus_coordinator
+    ports:
+      - "5555:5432"
+    volumes:
+      - citus_coordinator_data:/var/lib/postgresql/data
+      - ./init-citus.sh:/docker-entrypoint-initdb.d/init-citus.sh
+    environment:
+      <<: *common-env
+      POSTGRES_HOST_AUTH_METHOD: "trust" # Allows connections without password for setup
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    depends_on:
+      citus_worker_1:
+        condition: service_healthy
+      citus_worker_2:
+        condition: service_healthy
+      citus_worker_3:
+        condition: service_healthy
+    networks:
+      - citus-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  citus_worker_1:
+    image: citusdata/citus:13.0.3-alpine
+    container_name: citus_worker_1
+    restart: unless-stopped
+    ports:
+      - "6001:5432"
+    environment:
+      <<: *common-env
+    volumes:
+      - citus_worker_1_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck: *pg-healthcheck
+    networks:
+      - citus-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  citus_worker_2:
+    image: citusdata/citus:13.0.3-alpine
+    container_name: citus_worker_2
+    restart: unless-stopped
+    ports:
+      - "6002:5432"
+    environment:
+      <<: *common-env
+    volumes:
+      - citus_worker_2_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck: *pg-healthcheck
+    networks:
+      - citus-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  citus_worker_3:
+    image: citusdata/citus:13.0.3-alpine
+    container_name: citus_worker_3
+    restart: unless-stopped
+    ports:
+      - "6003:5432"
+    volumes:
+      - citus_worker_3_data:/var/lib/postgresql/data
+    environment:
+      <<: *common-env
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck: *pg-healthcheck
+    networks:
+      - citus-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+x-common-env: &common-env
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: secret
+  POSTGRES_DB: citus
+
+x-healthcheck: &pg-healthcheck
+  test: ["CMD-SHELL", "pg_isready -U postgres"]
+  interval: 10s
+  retries: 5
+  start_period: 10s
+
+volumes:
+  citus_coordinator_data:
+    driver: local
+  citus_worker_1_data:
+    driver: local
+  citus_worker_2_data:
+    driver: local
+  citus_worker_3_data:
+    driver: local
+
+networks:
+  citus-network:
+    driver: bridge
